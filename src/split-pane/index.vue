@@ -1,13 +1,15 @@
 <template>
   <div :style="{ cursor, userSelect}" class="vue-splitter-container clearfix" @mouseup="onMouseUp" @mousemove="onMouseMove">
 
-    <pane class="splitter-pane splitter-paneL" :split="split" :style="{ [type]: percent+'%'}">
+    <div class="resizer-wrap" :class="split" :style="{ [type]: percent, ['min-' + type]: min, ['max-' + type]: max}">
+      <resizer :style="{ [resizeType]: '100%'}" :split="split" @mousedown.native="onMouseDown"></resizer>
+    </div>
+
+    <pane ref="paneL" class="splitter-pane splitter-paneL" :split="split" :style="{ [type]: percent, ['min-' + type]: min, ['max-' + type]: max}">
       <slot name="paneL"></slot>
     </pane>
 
-    <resizer :style="{ [resizeType]: percent+'%'}" :split="split" @mousedown.native="onMouseDown" @click.native="onClick"></resizer>
-
-    <pane class="splitter-pane splitter-paneR" :split="split" :style="{ [type]: 100-percent+'%'}">
+    <pane class="splitter-pane splitter-paneR" :split="split" :style="{ [type]: 'calc(100% - ' + percent + ')', ['min-' + type]: 'calc(100% - ' + max + ')', ['max-' + type]: 'calc(100% - ' + min + ')'}">
       <slot name="paneR"></slot>
     </pane>
 
@@ -22,13 +24,17 @@
     name: 'splitPane',
     components: { Resizer, Pane },
     props: {
-      minPercent: {
-        type: Number,
-        default: 10
+      min: {
+        type: String,
+        default: "10%"
       },
-      defaultPercent: {
-        type: Number,
-        default: 50
+      max: {
+        type: String,
+        default: "90%"
+      },
+      default: {
+        type: String,
+        default: "50%"
       },
       split: {
         validator(value) {
@@ -50,18 +56,13 @@
         active: false,
         hasMoved: false,
         height: null,
-        percent: this.defaultPercent,
+        percent: this.default,
+        paneLsize: this.default,
         type: this.split === 'vertical' ? 'width' : 'height',
         resizeType: this.split === 'vertical' ? 'left' : 'top'
       }
     },
     methods: {
-      onClick() {
-        if (!this.hasMoved) {
-          this.percent = 50;
-          this.$emit('resize');
-        }
-      },
       onMouseDown() {
         this.active = true;
         this.hasMoved = false;
@@ -87,13 +88,9 @@
               target = target.offsetParent;
             }
           }
-
           const currentPage = this.split === 'vertical' ? e.pageX : e.pageY;
           const targetOffset = this.split === 'vertical' ? e.currentTarget.offsetWidth : e.currentTarget.offsetHeight;
-          const percent = Math.floor(((currentPage - offset) / targetOffset) * 10000) / 100;
-          if (percent > this.minPercent && percent < 100 - this.minPercent) {
-            this.percent = percent;
-          }
+          this.percent = (currentPage - offset) + "px";
           this.$emit('resize');
           this.hasMoved = true;
         }
@@ -103,6 +100,17 @@
 </script>
 
 <style scoped>
+.resizer-wrap.vertical {
+    position: absolute;
+    left: 0px;
+    height: 100%;
+}
+
+.resizer-wrap.horizontal {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+}
 .clearfix:after {
   visibility: hidden;
   display: block;

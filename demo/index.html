@@ -24,7 +24,7 @@
 
     <template>
 
-      <split-pane v-on:resize="resize" :min-percent='20' split="vertical">
+      <split-pane v-on:resize="resize" min='20%' split="vertical">
         <template slot="paneL">
           A
         </template>
@@ -38,7 +38,7 @@
             </template>
 
             <template slot="paneR">
-              <split-pane v-on:resize="resize" split="vertical" :default-percent='30'>
+              <split-pane v-on:resize="resize" split="vertical" default='30%'>
 
                 <template slot="paneL">
                  C
